@@ -1,0 +1,168 @@
+[
+  {
+    "key": "minutes_light",
+    "label": "Minutos actividad ligera",
+    "unit": "min",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [0, 1200],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "actividad",
+    "examples": [30, 60, 90]
+  },
+  {
+    "key": "minutes_moderate",
+    "label": "Minutos actividad moderada",
+    "unit": "min",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [0, 1200],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "actividad",
+    "examples": [30, 60, 150]
+  },
+  {
+    "key": "minute_vigorous",
+    "label": "Minutos actividad vigorosa",
+    "unit": "min",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [0, 600],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "actividad",
+    "examples": [10, 30, 75]
+  },
+  {
+    "key": "heart_rate_average_bpm",
+    "label": "FC media",
+    "unit": "bpm",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [30, 140],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "fisiologia",
+    "examples": [55, 65, 90]
+  },
+  {
+    "key": "max_heart_rate_bpm",
+    "label": "FC máxima",
+    "unit": "bpm",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [80, 220],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "fisiologia"
+  },
+  {
+    "key": "min_heart_rate_bpm",
+    "label": "FC mínima",
+    "unit": "bpm",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [30, 120],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "fisiologia"
+  },
+  {
+    "key": "resting_heart_rate",
+    "label": "FC reposo",
+    "unit": "bpm",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [30, 120],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "fisiologia"
+  },
+  {
+    "key": "user_max_heart_rate_bpm",
+    "label": "FC máx. usuario",
+    "unit": "bpm",
+    "type": "number",
+    "allowed_aggregators": ["current"],
+    "valid_range": [120, 220],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "fisiologia"
+  },
+  {
+    "key": "rem_sleep_minutes",
+    "label": "Sueño REM",
+    "unit": "min",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [0, 240],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "sueno"
+  },
+  {
+    "key": "asleep_state_minutes",
+    "label": "Minutos dormido",
+    "unit": "min",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [0, 720],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "sueno"
+  },
+  {
+    "key": "deep_sleep_state_minutes",
+    "label": "Sueño profundo",
+    "unit": "min",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [0, 240],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "sueno"
+  },
+  {
+    "key": "light_sleep_stat",
+    "label": "Sueño ligero",
+    "unit": "min",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [0, 480],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "sueno"
+  },
+  {
+    "key": "avg_breaths_per_min",
+    "label": "Respiraciones por minuto",
+    "unit": "bpm",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [6, 30],
+    "missing_policy": "skip",
+    "decimals": 1,
+    "category": "fisiologia"
+  },
+  {
+    "key": "heart_rate_variability_sdnn",
+    "label": "HRV SDNN",
+    "unit": "ms",
+    "type": "number",
+    "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","median_14d","delta_pct_3v14","zscore_28d"],
+    "valid_range": [10, 200],
+    "missing_policy": "skip",
+    "decimals": 0,
+    "category": "recuperacion"
+  },
+  { "key": "trimp", "label": "TRIMP", "unit": "score", "type": "number", "allowed_aggregators": ["current","mean_3d","mean_7d","mean_14d","delta_pct_3v14"], "valid_range": [0, 400], "missing_policy": "skip", "decimals": 0, "category": "actividad" },
+  { "key": "acwr", "label": "ACWR", "unit": "ratio", "type": "number", "allowed_aggregators": ["current","mean_7d"], "valid_range": [0, 2.5], "missing_policy": "skip", "decimals": 2, "category": "actividad" },
+  { "key": "readiness_score", "label": "Readiness", "unit": "score", "type": "number", "allowed_aggregators": ["current"], "valid_range": [0, 100], "missing_policy": "skip", "decimals": 0, "category": "recuperacion" },
+  { "key": "daily_activity_score", "label": "Actividad diaria", "unit": "score", "type": "number", "allowed_aggregators": ["current"], "valid_range": [0, 100], "missing_policy": "skip", "decimals": 0, "category": "actividad" },
+  { "key": "sleep_efficiency", "label": "Eficiencia del sueño", "unit": "ratio", "type": "number", "allowed_aggregators": ["current","mean_3d"], "valid_range": [0.5, 1.0], "missing_policy": "skip", "decimals": 2, "category": "sueno" },
+  { "key": "hrv_rhr_ratio", "label": "HRV/RHR ratio", "unit": "ratio", "type": "number", "allowed_aggregators": ["current","delta_pct_3v14"], "valid_range": [0, 3], "missing_policy": "skip", "decimals": 2, "category": "recuperacion" }
+]
+
+

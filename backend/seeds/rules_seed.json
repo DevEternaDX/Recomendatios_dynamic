@@ -1,0 +1,96 @@
+[
+  {
+    "id": "R-ACT-ACWR-READINESS-01",
+    "version": 1,
+    "enabled": true,
+    "tenant_id": "default",
+    "category": "actividad",
+    "priority": 80,
+    "severity": 2,
+    "cooldown_days": 3,
+    "max_per_day": 0,
+    "tags": ["composed","preventive"],
+    "logic": {"all": [
+      {"var":"acwr","agg":"mean_7d","op":">","value":1.2},
+      {"var":"readiness_score","agg":"current","op":"<","value":50}
+    ]},
+    "messages": {
+      "locale": "es-ES",
+      "candidates": [
+        {"id":"MSG1","text":"ACWR {{acwr:mean_7d:.2f}} alto y Readiness {{readiness_score:current:.0f}} bajo → prioriza recuperación hoy.", "weight": 2},
+        {"id":"MSG2","text":"Carga reciente alta con recuperación limitada. Considera baja intensidad.", "weight": 1}
+      ]
+    }
+  },
+  {
+    "id": "R-ACT-ACWR-SLEEP-02",
+    "version": 1,
+    "enabled": true,
+    "tenant_id": "default",
+    "category": "actividad",
+    "priority": 70,
+    "severity": 2,
+    "cooldown_days": 2,
+    "max_per_day": 0,
+    "tags": ["composed"],
+    "logic": {"all": [
+      {"var":"acwr","agg":"mean_7d","op":">","value":1.2},
+      {"any":[
+        {"var":"asleep_state_minutes","agg":"mean_3d","op":"<","value":360},
+        {"var":"sleep_efficiency","agg":"mean_3d","op":"<","value":0.85}
+      ]}
+    ]},
+    "messages": {
+      "locale": "es-ES",
+      "candidates": [
+        {"id":"MSG1","text":"ACWR {{acwr:mean_7d:.2f}} y sueño bajo → prioriza descanso.", "weight": 1}
+      ]
+    }
+  },
+  {
+    "id": "R-ACT-TRIMP-HRV-03",
+    "version": 1,
+    "enabled": true,
+    "tenant_id": "default",
+    "category": "recuperacion",
+    "priority": 60,
+    "severity": 2,
+    "cooldown_days": 2,
+    "max_per_day": 0,
+    "tags": ["composed"],
+    "logic": {"all": [
+      {"var":"trimp","agg":"mean_3d","op":">","value":150},
+      {"var":"hrv_rhr_ratio","agg":"delta_pct_3v14","op":"<","value":-0.20}
+    ]},
+    "messages": {
+      "locale": "es-ES",
+      "candidates": [
+        {"id":"MSG1","text":"TRIMP alto y HRV/RHR empeora {{hrv_rhr_ratio:delta_pct_3v14:.2f}} → recupérate.", "weight": 1}
+      ]
+    }
+  },
+  {
+    "id": "R-POS-READINESS-ACTIVITY-04",
+    "version": 1,
+    "enabled": true,
+    "tenant_id": "default",
+    "category": "actividad",
+    "priority": 40,
+    "severity": 1,
+    "cooldown_days": 1,
+    "max_per_day": 0,
+    "tags": ["refuerzo"],
+    "logic": {"all": [
+      {"var":"readiness_score","agg":"current","op":">","value":80},
+      {"var":"daily_activity_score","agg":"current","op":"<","value":50}
+    ]},
+    "messages": {
+      "locale": "es-ES",
+      "candidates": [
+        {"id":"MSG1","text":"Readiness {{readiness_score:current:.0f}} alto. Suma hoy minutos de calidad.", "weight": 1}
+      ]
+    }
+  }
+]
+
+

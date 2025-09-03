@@ -142,9 +142,53 @@ export default function NewRulePage() {
           </div>
           <div className="card">
             <h2 className="font-medium mb-2">Mensajes</h2>
-            <textarea className="w-full" rows={4} value={form.messages.candidates[0].text} onChange={e=>{
-              const next={...form}; next.messages.candidates[0].text=e.target.value; setForm(next)
-            }} />
+            <div className="space-y-3">
+              {(form.messages?.candidates||[]).map((cand:any, idx:number)=> (
+                <div key={idx} className="flex items-start gap-2">
+                  <textarea className="w-full" rows={3} value={cand.text} onChange={e=>{
+                    const next={...form};
+                    const arr=[...(next.messages?.candidates||[])];
+                    arr[idx] = { ...arr[idx], text: e.target.value };
+                    next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr };
+                    setForm(next)
+                  }} />
+                  <div className="w-28">
+                    <label className="block text-sm">Peso</label>
+                    <input type="number" className="w-full" value={cand.weight||1} onChange={e=>{
+                      const next={...form};
+                      const arr=[...(next.messages?.candidates||[])];
+                      arr[idx] = { ...arr[idx], weight: Number(e.target.value)||1 };
+                      next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr };
+                      setForm(next)
+                    }} />
+                    <button className="btn w-full mt-2" onClick={()=>{
+                      const next={...form};
+                      const arr=[...(next.messages?.candidates||[])];
+                      arr.splice(idx,1);
+                      next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr.length? arr : [{ text: 'Mensaje', weight: 1 }] };
+                      setForm(next)
+                    }}>Eliminar</button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center gap-2">
+                <button className="btn" onClick={()=>{
+                  const next={...form};
+                  const arr=[...(next.messages?.candidates||[])];
+                  arr.push({ text: 'Nueva variante', weight: 1 });
+                  next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr };
+                  setForm(next)
+                }}>+ variante</button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">Locale</span>
+                  <input className="w-28" value={form.messages?.locale||'es-ES'} onChange={e=>{
+                    const next={...form};
+                    next.messages = { ...(next.messages||{candidates:[]}), locale: e.target.value, candidates: next.messages?.candidates||[{text:'Mensaje',weight:1}] };
+                    setForm(next)
+                  }} />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

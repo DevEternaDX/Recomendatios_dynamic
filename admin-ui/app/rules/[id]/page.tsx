@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getRule, updateRule } from '@/lib/api'
+import { getRule, updateRule, addVariant, patchVariant, deleteVariant, getRuleStats, getRuleChangelog } from '@/lib/api'
 
 function ConditionRow({ cond, onChange, onDelete }: { cond: any; onChange: (v:any)=>void; onDelete: ()=>void }) {
   return (
@@ -74,11 +74,15 @@ export default function RuleEditorPage() {
   const [data, setData] = useState<any | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState<{ fires: number; by_message: Record<string, number> } | null>(null)
+  const [logs, setLogs] = useState<any[] | null>(null)
 
   useEffect(() => {
     (async () => {
       const r = await getRule(params.id)
       setData(r)
+      try { const s = await getRuleStats(params.id); setStats({ fires: s.fires, by_message: s.by_message }) } catch {}
+      try { const l = await getRuleChangelog(params.id, 50); setLogs(l) } catch {}
     })()
   }, [params.id])
 
@@ -157,18 +161,107 @@ export default function RuleEditorPage() {
           </div>
           <div className="card">
             <h2 className="font-medium mb-2">Mensajes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {stats && (
+              <div className="text-xs text-muted mb-2">Disparos totales: {stats.fires}</div>
+            )}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Locale</span>
+                <input className="w-28" value={data.messages?.locale||'es-ES'} onChange={e=>{
+                  const next={...data}
+                  next.messages = { ...(next.messages||{candidates:[]}), locale: e.target.value, candidates: next.messages?.candidates||[] }
+                  setData(next)
+                }} />
+              </div>
               {(data.messages?.candidates || []).map((c:any, idx:number) => (
-                <div key={idx} className="card">
-                  <div className="text-xs text-muted">Weight {c.weight}</div>
-                  <textarea className="w-full mt-1" rows={4} value={c.text} onChange={e => {
+                <div key={idx} className="flex items-start gap-2">
+                  <textarea className="w-full" rows={3} value={c.text} onChange={e => {
                     const next = { ...data }
-                    next.messages.candidates[idx].text = e.target.value
+                    const arr = [...(next.messages?.candidates||[])]
+                    arr[idx] = { ...arr[idx], text: e.target.value }
+                    next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr }
                     setData(next)
                   }} />
+                  <div className="w-28">
+                    <label className="block text-sm">Peso</label>
+                    <input type="number" className="w-full" value={c.weight||1} onChange={e=>{
+                      const next={...data}
+                      const arr=[...(next.messages?.candidates||[])]
+                      arr[idx] = { ...arr[idx], weight: Number(e.target.value)||1 }
+                      next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr }
+                      setData(next)
+                    }} />
+                    <button className="btn w-full mt-2" onClick={async()=>{
+                      try {
+                        const mid = c.id
+                        if (mid) await deleteVariant(data.id, mid)
+                      } finally {
+                        const next={...data}
+                        const arr=[...(next.messages?.candidates||[])]
+                        arr.splice(idx,1)
+                        next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr }
+                        setData(next)
+                      }
+                    }}>Eliminar</button>
+                    {stats?.by_message && c.id != null && (
+                      <div className="text-xs text-muted mt-1">Hits: {stats.by_message[String(c.id)]||0}</div>
+                    )}
+                  </div>
                 </div>
               ))}
+              <button className="btn" onClick={async()=>{
+                const next={...data}
+                const arr=[...(next.messages?.candidates||[])]
+                try {
+                  const resp = await addVariant(data.id, { text: 'Nueva variante', weight: 1 })
+                  arr.push({ id: resp.message_id, text: 'Nueva variante', weight: 1, active: true })
+                } catch {
+                  arr.push({ text: 'Nueva variante', weight: 1 })
+                }
+                next.messages = { ...(next.messages||{locale:'es-ES',candidates:[]}), candidates: arr }
+                setData(next)
+              }}>+ variante</button>
             </div>
+          </div>
+          <div className="card">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-medium">Logs de cambios</h2>
+              <button className="btn" onClick={()=>{
+                try {
+                  const data = logs || []
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `rule-${data?.[0]?.entity_id||params.id}-changelog.json`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                } catch {}
+              }}>Descargar JSON</button>
+            </div>
+            {!logs && <div className="text-sm text-muted">Sin datos</div>}
+            {logs && logs.length === 0 && <div className="text-sm text-muted">No hay cambios registrados</div>}
+            {logs && logs.length > 0 && (
+              <div className="space-y-2">
+                {logs.map((l:any)=> (
+                  <details key={l.id} className="bg-white/5 p-2 rounded">
+                    <summary className="cursor-pointer text-sm">
+                      <span className="font-mono">#{l.id}</span> {l.created_at} — {l.user||'—'} ({l.role||'—'}) — {l.action}
+                    </summary>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <div className="text-xs text-muted">ANTES</div>
+                        <pre className="text-xs overflow-x-auto bg-white/5 p-2">{JSON.stringify(l.before, null, 2)}</pre>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted">DESPUÉS</div>
+                        <pre className="text-xs overflow-x-auto bg-white/5 p-2">{JSON.stringify(l.after, null, 2)}</pre>
+                      </div>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>

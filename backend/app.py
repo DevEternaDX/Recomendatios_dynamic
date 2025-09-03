@@ -5,6 +5,7 @@ from backend.api.evaluate import router as evaluate_router
 from backend.api.rules import router as rules_router
 from backend.api.variables import router as variables_router
 from backend.api.import_export import router as import_export_router
+from backend.api.analytics import router as analytics_router
 from fastapi.middleware.cors import CORSMiddleware
 from backend.config import settings
 from backend.rules_engine.persistence import create_all_tables
@@ -19,13 +20,12 @@ def create_app() -> FastAPI:
     app = FastAPI(title="ETERNA DX Rules Engine", version="0.1.0")
 
     # CORS (dev): permitir UI local
+    # CORS (dev): permitir UI local. En desarrollo abrimos a '*'
+    # CORS abierto (desarrollo). Si quieres restringir, ajusta aquí.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-        ],
-        allow_credentials=True,
+        allow_origins=["*"],
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(rules_router)
     app.include_router(variables_router)
     app.include_router(import_export_router)
+    app.include_router(analytics_router)
 
     @app.on_event("startup")
     def on_startup() -> None:

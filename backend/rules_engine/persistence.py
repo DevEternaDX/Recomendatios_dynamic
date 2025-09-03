@@ -113,6 +113,20 @@ class Audit(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
 
 
+class ChangeLog(Base):
+    __tablename__ = "change_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), index=True)
+    user: Mapped[Optional[str]]
+    role: Mapped[Optional[str]]
+    action: Mapped[str] = mapped_column(String(50))
+    entity_type: Mapped[str] = mapped_column(String(50))
+    entity_id: Mapped[Optional[str]]
+    before: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    after: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+
+
 def create_all_tables() -> None:
     Base.metadata.create_all(engine)
 

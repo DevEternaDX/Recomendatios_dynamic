@@ -19,8 +19,7 @@ import sys
 # Configuración de importaciones y rutas
 # - Inserta el directorio raíz del proyecto en sys.path para poder importar
 #   el módulo de configuración `config.py` sin depender del cwd del intérprete.
-# Asegurar que el directorio raíz del proyecto está en sys.path para poder importar config
-
+# Asegurar que el directorio raíz del proyecto está en sys.path para importar la configuración global
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)

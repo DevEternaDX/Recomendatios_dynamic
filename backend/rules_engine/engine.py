@@ -113,13 +113,44 @@ def eval_node(node: Any, features: Dict[str, Dict[str, Any]], why: list[dict[str
     return False
 
 
-def select_message_for_rule(rule: Rule, features: Dict[str, Dict[str, Any]]) -> Tuple[int | None, str, list[str]]:
+def select_message_for_rule(rule: Rule, features: Dict[str, Dict[str, Any]], user_id: str, day: date) -> Tuple[int | None, str, list[str]]:
+    # Construir candidatos activos
     candidates = [
         {"id": m.id, "text": m.text, "weight": m.weight}
         for m in rule.messages
         if m.active
     ]
-    choice = select_weighted_random(candidates)
+    if not candidates:
+        return None, "", []
+
+    # Anti-repetición: excluir variantes usadas en los últimos N días y preferir no vistas
+    recent_ids: set[int] = set()
+    try:
+        days = max(0, int(settings.anti_repeat_days))
+    except Exception:
+        days = 0
+    if days > 0:
+        since = day - timedelta(days=days)
+        with get_session() as session:
+            rows = (
+                session.query(Audit.message_id)
+                .filter(
+                    Audit.user_id == user_id,
+                    Audit.rule_id == rule.id,
+                    Audit.fired == True,
+                    Audit.date >= since,
+                    Audit.message_id.isnot(None),
+                )
+                .all()
+            )
+            for (mid,) in rows:
+                if isinstance(mid, int):
+                    recent_ids.add(mid)
+
+    preferred = [c for c in candidates if c.get("id") not in recent_ids]
+    pool = preferred if preferred else candidates
+
+    choice = select_weighted_random(pool)
     if not choice:
         return None, "", []
     text, warnings = render_message(choice.get("text", ""), features)
@@ -243,7 +274,7 @@ def evaluate_user(user_id: str, target_day: date, tenant_id: str = "default", de
 
         why: list[dict[str, Any]] = []
         fired = eval_node(model.logic, feats, why)
-        msg_id, msg_text, warn = select_message_for_rule(r, feats)
+        msg_id, msg_text, warn = select_message_for_rule(r, feats, user_id, target_day)
         per_rule_debug.append({
             "rule_id": r.id,
             "fired": bool(fired),

@@ -17,16 +17,27 @@ class FeatureComputationContext:
 
 
 def load_base_dataframe() -> pd.DataFrame:
-    """Carga y fusiona los CSV reales de actividad y sueño.
+    """Carga el DataFrame procesado con variables derivadas.
 
-    - data/patient_daily_data.csv
-    - data/patient_sleep_data.csv
-
-    Devuelve un DataFrame con columnas normalizadas y una fila por (user_id, date).
-    Si los ficheros no existen o hay error, retorna un DataFrame vacío con las
-    columnas básicas para evitar romper la API.
+    Primero intenta cargar el CSV procesado (data/daily_processed.csv)
+    que contiene todas las variables derivadas (acwr, trimp, readiness_score, etc.).
+    
+    Si no existe, fallback a los CSV originales para compatibilidad.
     """
-    # Permitir override de rutas de CSV vía variables de entorno para testing
+    # Intentar cargar el CSV procesado primero
+    processed_path = os.path.join("data", "daily_processed.csv")
+    if os.path.exists(processed_path):
+        try:
+            df = pd.read_csv(processed_path)
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"], errors="coerce")
+            if "user_id" in df.columns:
+                df["user_id"] = df["user_id"].astype(str)
+            return df
+        except Exception as e:
+            print(f"Warning: Error loading processed CSV: {e}, falling back to original CSV")
+    
+    # Fallback: cargar CSV originales (código existente)
     daily_path = os.getenv("DAILY_CSV_PATH", os.path.join("data", "patient_daily_data.csv"))
     sleep_path = os.getenv("SLEEP_CSV_PATH", os.path.join("data", "patient_sleep_data.csv"))
 
@@ -210,11 +221,22 @@ def build_features(df: pd.DataFrame, target_date: date, user_id: str) -> Dict[st
             continue
         add(key, "current", last.get(key))
 
-    # Rolling windows
+    # Rolling windows - solo procesar columnas numéricas
+    # Excluir columnas de fecha/hora y texto
+    exclude_cols = {"date", "user_id", "bedtime", "waketime", "start_date_time", "end_date_time", 
+                   "calculation_date", "webhook_date_time", "last_webhook_update_date_time", 
+                   "device_source", "sex", "gender"}
+    
     for key in user_df.columns:
-        if key in {"date", "user_id"}:
+        if key in exclude_cols:
             continue
-        s = user_df[key].astype(float)
+        
+        # Intentar convertir a float, saltar si no es posible
+        try:
+            s = user_df[key].astype(float)
+        except (ValueError, TypeError):
+            # Si no se puede convertir a float, saltar esta columna
+            continue
         add(key, "mean_3d", rolling_mean(s, 3))
         add(key, "mean_7d", rolling_mean(s, 7))
         add(key, "mean_14d", rolling_mean(s, 14))

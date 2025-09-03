@@ -2,12 +2,15 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { listRules, enableRule, cloneRule, deleteRule } from '@/lib/api'
+import { listRules, enableRule, cloneRule, deleteRule, exportRules, importRules, importRulesCsv } from '@/lib/api'
 
 export default function RulesPage() {
   const [rows, setRows] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importText, setImportText] = useState('')
+  const [csvMode, setCsvMode] = useState(false)
 
   async function load() {
     try {
@@ -51,6 +54,31 @@ export default function RulesPage() {
         <div className="space-x-2">
           <Link href="/" className="btn">Volver</Link>
           <Link href="/rules/new" className="btn btn-primary">Nueva Regla</Link>
+          <button className="btn" onClick={async()=>{
+            try {
+              const data = await exportRules('json')
+              const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'rules-export.json'
+              a.click()
+              URL.revokeObjectURL(url)
+            } catch (e:any) { alert(e?.message||'Error exportando') }
+          }}>Exportar JSON</button>
+          <button className="btn" onClick={async()=>{
+            try {
+              const data = await exportRules('yaml')
+              const blob = new Blob([typeof data === 'string' ? data : String(data)], { type: 'text/yaml' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'rules-export.yaml'
+              a.click()
+              URL.revokeObjectURL(url)
+            } catch (e:any) { alert(e?.message||'Error exportando YAML (¿pyyaml instalado?)') }
+          }}>Exportar YAML</button>
+          <button className="btn" onClick={()=> setImporting(true)}>Importar</button>
         </div>
       </div>
       {loading && <div className="text-muted">Cargando…</div>}
@@ -80,6 +108,66 @@ export default function RulesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {importing && (
+        <div className="card space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="font-medium">Importar Reglas (JSON, YAML o CSV)</div>
+            <button className="btn" onClick={()=> setImporting(false)}>Cerrar</button>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={csvMode} onChange={e=> setCsvMode(e.target.checked)} /> CSV (dictionary.csv)
+            </label>
+            <input type="file" accept=".csv,.json,.yaml,.yml" onChange={async (e:any)=>{
+              try {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const text = await file.text()
+                setImportText(text)
+                const name = (file.name||'').toLowerCase()
+                setCsvMode(name.endsWith('.csv'))
+              } catch {}
+            }} />
+            <span className="text-xs text-muted">o pega el contenido abajo</span>
+          </div>
+          <details className="bg-white/5 p-2 rounded">
+            <summary className="cursor-pointer text-sm">Formato de importación (ayuda)</summary>
+            <div className="text-xs mt-2 space-y-2">
+              <div>
+                <div className="font-medium">CSV</div>
+                <div>Columnas: <code>message_id, category, template_text</code>. Variantes con sufijo <code>_vN</code> se agrupan por el ID base.</div>
+                <pre className="bg-white/5 p-2 overflow-x-auto">{`message_id,category,template_text\nregla_test_v1,general,Mensaje 1\nregla_test_v2,general,Mensaje 2`}</pre>
+              </div>
+              <div>
+                <div className="font-medium">JSON (lista de reglas)</div>
+                <pre className="bg-white/5 p-2 overflow-x-auto">{`[\n  {\n    "id": "regla_test",\n    "enabled": true,\n    "tenant_id": "default",\n    "category": "general",\n    "priority": 50,\n    "severity": 1,\n    "cooldown_days": 0,\n    "max_per_day": 0,\n    "tags": [],\n    "logic": {},\n    "messages": {\n      "locale": "es-ES",\n      "candidates": [ { "text": "Mensaje 1", "weight": 1 } ]\n    }\n  }\n]`}</pre>
+              </div>
+              <div>
+                <div className="font-medium">YAML (equivalente al JSON anterior)</div>
+                <pre className="bg-white/5 p-2 overflow-x-auto">{`- id: regla_test\n  enabled: true\n  tenant_id: default\n  category: general\n  priority: 50\n  severity: 1\n  cooldown_days: 0\n  max_per_day: 0\n  tags: []\n  logic: {}\n  messages:\n    locale: es-ES\n    candidates:\n      - text: "Mensaje 1"\n        weight: 1`}</pre>
+              </div>
+            </div>
+          </details>
+          <textarea className="w-full" rows={8} value={importText} onChange={e=> setImportText(e.target.value)} placeholder="Pega aquí JSON/YAML o CSV" />
+          <div className="space-x-2">
+            <button className="btn btn-primary" onClick={async()=>{
+              try {
+                if (!importText.trim()) return
+                if (csvMode) {
+                  await importRulesCsv(importText)
+                } else {
+                  const looksJson = importText.trim().startsWith('[')
+                  await importRules(looksJson ? JSON.parse(importText) : importText, looksJson ? 'json' : 'yaml')
+                }
+                setImporting(false)
+                setImportText('')
+                setCsvMode(false)
+                await load()
+              } catch (e:any) { alert(e?.message||'Error importando') }
+            }}>Subir</button>
+          </div>
         </div>
       )}
     </main>

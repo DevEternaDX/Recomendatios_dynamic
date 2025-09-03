@@ -22,6 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/rules" className="nav-item">Reglas</Link>
               <Link href="/simulate" className="nav-item">Simulación</Link>
               <Link href="/variables" className="nav-item">Variables</Link>
+              <Link href="/stats" className="nav-item">Estadísticas</Link>
+              <Link href="/logs" className="nav-item">Logs</Link>
             </nav>
             <div className="mt-auto text-xs text-muted px-2">v0.1.0</div>
           </aside>

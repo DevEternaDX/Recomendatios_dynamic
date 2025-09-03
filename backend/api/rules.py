@@ -210,6 +210,40 @@ def update_rule(rule_id: str, req: UpdateRuleRequest, ctx: dict[str, Any] = Depe
         return {"id": r.id}
 
 
+@router.delete("/all")
+def delete_all_rules(ctx: dict[str, Any] = Depends(_current_user)) -> dict[str, Any]:
+    """Eliminar TODAS las reglas (solo para testing)."""
+    try:
+        _require_role(ctx, ("admin",))
+        with get_session() as session:
+            # Contar reglas antes de eliminar
+            total_rules = session.query(Rule).count()
+            
+            if total_rules == 0:
+                return {"deleted": 0, "message": "No hay reglas para eliminar"}
+            
+            # Eliminar todos los mensajes de reglas primero (por FK constraint)
+            deleted_messages = session.query(RuleMessage).delete()
+            
+            # Eliminar todas las reglas
+            deleted_rules = session.query(Rule).delete()
+            
+            # Log del cambio masivo
+            # _log_change(session, ctx, "delete_all", "rules", "ALL", {"total": total_rules}, None)
+            
+            session.commit()
+            
+            return {
+                "deleted": deleted_rules,
+                "deleted_messages": deleted_messages,
+                "message": f"Se eliminaron {deleted_rules} reglas y {deleted_messages} mensajes"
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+
 @router.delete("/{rule_id}")
 def delete_rule(rule_id: str, ctx: dict[str, Any] = Depends(_current_user)) -> dict[str, Any]:
     try:

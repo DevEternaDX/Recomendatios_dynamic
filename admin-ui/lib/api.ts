@@ -96,6 +96,11 @@ export async function importRulesCsv(csvText: string, opts?: { tenant_id?: strin
   return data as { created: string[]; updated: string[] }
 }
 
+export async function deleteAllRules() {
+  const { data } = await api.delete('/rules/all')
+  return data as { deleted: number; deleted_messages: number; message: string }
+}
+
 export async function listVariables() {
   const { data } = await api.get('/variables')
   return data as any[]

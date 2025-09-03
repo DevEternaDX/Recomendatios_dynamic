@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { listRules, enableRule, cloneRule, deleteRule, exportRules, importRules, importRulesCsv } from '@/lib/api'
+import { listRules, enableRule, cloneRule, deleteRule, exportRules, importRules, importRulesCsv, deleteAllRules } from '@/lib/api'
 
 export default function RulesPage() {
   const [rows, setRows] = useState<any[]>([])
@@ -44,6 +44,40 @@ export default function RulesPage() {
     await load()
   }
 
+  async function removeAll() {
+    const totalRules = rows.length
+    
+    if (totalRules === 0) {
+      alert('No hay reglas para eliminar')
+      return
+    }
+
+    // Doble confirmación para operación peligrosa
+    const firstConfirm = confirm(
+      `⚠️ PELIGRO: Vas a eliminar TODAS las ${totalRules} reglas.\n\n` +
+      `Esta acción NO se puede deshacer.\n\n` +
+      `¿Estás seguro de que quieres continuar?`
+    )
+    
+    if (!firstConfirm) return
+
+    const secondConfirm = confirm(
+      `🚨 ÚLTIMA CONFIRMACIÓN:\n\n` +
+      `Se eliminarán ${totalRules} reglas permanentemente.\n\n` +
+      `Escribe "ELIMINAR TODAS" mentalmente y haz clic en OK para confirmar.`
+    )
+    
+    if (!secondConfirm) return
+
+    try {
+      const result = await deleteAllRules()
+      alert(`✅ ${result.message}`)
+      load() // Recargar la lista
+    } catch (e: any) {
+      alert(`❌ Error: ${e?.message || 'Error eliminando reglas'}`)
+    }
+  }
+
   return (
     <main className="space-y-4">
       <div className="flex items-center justify-between">
@@ -79,6 +113,13 @@ export default function RulesPage() {
             } catch (e:any) { alert(e?.message||'Error exportando YAML (¿pyyaml instalado?)') }
           }}>Exportar YAML</button>
           <button className="btn" onClick={()=> setImporting(true)}>Importar</button>
+          <button 
+            className="btn bg-red-600 hover:bg-red-700 text-white" 
+            onClick={removeAll}
+            title="⚠️ Eliminar TODAS las reglas (solo para testing)"
+          >
+            🗑️ Eliminar Todas
+          </button>
         </div>
       </div>
       {loading && <div className="text-muted">Cargando…</div>}

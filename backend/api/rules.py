@@ -426,8 +426,8 @@ def import_rules(req: ImportRulesRequest) -> dict[str, Any]:
                 r.logic = rule_model.logic.model_dump() if hasattr(rule_model.logic, "model_dump") else rule_model.logic  # type: ignore
                 r.locale = rule_model.messages.locale
                 # reemplazar mensajes
-                for m in list(r.messages):
-                    session.delete(m)
+        for m in list(r.messages):
+            session.delete(m)
                 for cand in rule_model.messages.candidates:
                     session.add(
                         RuleMessage(
